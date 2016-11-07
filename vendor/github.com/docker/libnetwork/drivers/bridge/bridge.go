@@ -57,6 +57,7 @@ type configuration struct {
 type networkConfiguration struct {
 	ID                 string
 	BridgeName         string
+	BridgeExisting     bool
 	EnableIPv6         bool
 	EnableIPMasquerade bool
 	EnableICC          bool
@@ -215,6 +216,10 @@ func (c *networkConfiguration) fromLabels(labels map[string]string) error {
 		switch label {
 		case BridgeName:
 			c.BridgeName = value
+		case BridgeExisting:
+			if c.BridgeExisting, err = strconv.ParseBool(value); err != nil {
+				return parseErr(label, value, err.Error())
+			}
 		case netlabel.DriverMTU:
 			if c.Mtu, err = strconv.Atoi(value); err != nil {
 				return parseErr(label, value, err.Error())
@@ -698,6 +703,15 @@ func (d *driver) createNetwork(config *networkConfiguration) error {
 	// If the bridge interface doesn't exist, we need to start the setup steps
 	// by creating a new device and assigning it an IPv4 address.
 	bridgeAlreadyExists := bridgeIface.exists()
+	// If we are being asked to use an existing bridge confirm it is present
+	// and if so assume it is already fully prepared for our use.
+	if config.BridgeExisting {
+		if !bridgeAlreadyExists {
+			return types.ForbiddenErrorf("cannot create network %s (%s): bridge does not exist",
+				config.ID, config.BridgeName)
+		}
+		return nil
+	}
 	if !bridgeAlreadyExists {
 		bridgeSetup.queueStep(setupDevice)
 	}

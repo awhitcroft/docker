@@ -4,6 +4,9 @@ const (
 	// BridgeName label for bridge driver
 	BridgeName = "com.docker.network.bridge.name"
 
+	// BridgeExisting label for bridge driver
+	BridgeExisting = "com.docker.network.bridge.existing"
+
 	// EnableIPMasquerade label for bridge driver
 	EnableIPMasquerade = "com.docker.network.bridge.enable_ip_masquerade"
 
